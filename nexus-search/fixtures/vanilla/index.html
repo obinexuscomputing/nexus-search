@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Search</title>
+    <link rel="stylesheet" type=text/css href="main.css"/>
+    <script src="../../dist/index.umd.js"></script>
+</head>
+<body>
+    <div class="search-container">
+        <input type="text" class="search-input" placeholder="Search documents...">
+        <div class="results"></div>
+    </div>
+
+    <script defer>
+        // Initialize search engine
+        const searchEngine = new NexusSearch.SearchEngine({
+            fuzzy: true,
+            name: 'document-search',
+            version: 1,
+            fields: ['title', 'content', 'type'],
+            storage: { type: 'memory' }
+        });
+
+        // Sample documents (HTML and Markdown)
+        const documents = [
+            {
+                id: 'doc1',
+                title: 'Getting Started with JavaScript',
+                content: `
+                    # Getting Started with JavaScript
+                    
+                    JavaScript is a versatile programming language that runs in browsers.
+                    Here's what you'll learn:
+                    
+                    * Basic syntax and variables
+                    * Functions and scope
+                    * DOM manipulation
+                `,
+                type: 'markdown'
+            },
+            {
+                id: 'doc2',
+                title: 'HTML Fundamentals',
+                content: `
+                    <article>
+                        <h1>HTML Fundamentals</h1>
+                        <p>HTML is the backbone of web development.</p>
+                        <ul>
+                            <li>Elements and tags</li>
+                            <li>Document structure</li>
+                            <li>Semantic markup</li>
+                        </ul>
+                    </article>
+                `,
+                type: 'html'
+            },
+            {
+                id: 'doc3',
+                title: 'CSS Best Practices',
+                content: `
+                    # CSS Best Practices
+                    
+                    Writing maintainable CSS requires following some key principles:
+                    
+                    1. Use meaningful class names
+                    2. Keep specificity low
+                    3. Follow a consistent methodology
+                `,
+                type: 'markdown'
+            }
+        ];
+
+        // Initialize and add documents
+        async function initializeSearch() {
+            try {
+                await searchEngine.initialize();
+                await searchEngine.addDocuments(documents);
+                console.log('Search engine initialized with documents');
+            } catch (error) {
+                console.error('Initialization error:', error);
+            }
+        }
+
+        // Highlight search terms in content
+        function highlightText(text, searchTerm) {
+            if (!searchTerm) return text;
+            const regex = new RegExp(`(${searchTerm})`, 'gi');
+            return text.replace(regex, '<span class="highlight">$1</span>');
+        }
+
+        // Render search results
+        function renderResults(results) {
+            const resultsContainer = document.querySelector('.results');
+            resultsContainer.innerHTML = results.map(result => `
+                <div class="result-item">
+                    <h3 class="result-title">${highlightText(result.item.title, document.querySelector('.search-input').value)}</h3>
+                    <p class="result-content">${highlightText(result.item.content.slice(0, 200), document.querySelector('.search-input').value)}...</p>
+                    <div class="meta">
+                        Type: ${result.item.type} | Score: ${result.score.toFixed(2)}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Handle search
+        let searchTimeout;
+        document.querySelector('.search-input').addEventListener('input', async (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value;
+            
+            searchTimeout = setTimeout(async () => {
+                if (query.length < 2) {
+                    document.querySelector('.results').innerHTML = '';
+                    return;
+                }
+
+                try {
+                    const results = await searchEngine.search(query, {
+                        fuzzy: true,
+                        maxResults: 10,
+                        threshold: 0.2
+                    });
+                    renderResults(results);
+                } catch (error) {
+                    console.error('Search error:', error);
+                }
+            }, 300);
+        });
+
+        // Initialize search engine
+        initializeSearch();
+    </script>
+</body>
+</html>

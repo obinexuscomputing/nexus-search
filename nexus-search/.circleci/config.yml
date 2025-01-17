@@ -1,0 +1,115 @@
+# .circleci/config.yml
+version: 2.1
+
+orbs:
+  node: circleci/node@5.1.0
+  codecov: codecov/codecov@3.2.5
+
+jobs:
+  test:
+    docker:
+      - image: cimg/node:18.16
+    resource_class: large
+    steps:
+      - checkout
+      
+      - node/install-packages:
+          pkg-manager: npm
+          cache-path: ~/project/node_modules
+          override-ci-command: npm ci
+      
+      - run:
+          name: Lint
+          command: npm run lint
+      
+      - run:
+          name: Format Check
+          command: npm run format -- --check
+      
+      - run:
+          name: Run Tests CI
+          command: npm run test:ci
+          environment:
+            JEST_JUNIT_OUTPUT_DIR: ./reports/junit/
+      
+      - run:
+          name: Build
+          command: npm run build
+      
+      - store_test_results:
+          path: ./reports/junit/
+          
+      - store_artifacts:
+          path: ./coverage
+          destination: coverage
+          
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - .
+
+      - codecov/upload:
+          file: './coverage/lcov.info'
+
+  test-package:
+    docker:
+      - image: cimg/node:18.16
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/project
+      
+      - run:
+          name: Make test script executable
+          command: chmod +x ./scripts/test-package.sh
+      
+      - run:
+          name: Test package installation
+          command: ./scripts/test-package.sh
+      
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: test-results
+
+  publish:
+    docker:
+      - image: cimg/node:18.16
+    steps:
+      - attach_workspace:
+          at: ~/project
+      
+      - run:
+          name: Authenticate with registry
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/project/.npmrc
+      
+      - run:
+          name: Verify package contents
+          command: |
+            npm pack
+            tar -tzf *.tgz
+      
+      - run:
+          name: Publish package
+          command: |
+            if [ "${CIRCLE_BRANCH}" = "main" ]; then
+              npm publish
+            elif [ "${CIRCLE_BRANCH}" = "develop" ]; then
+              npm publish --tag beta
+            fi
+
+workflows:
+  version: 2
+  build-test-publish:
+    jobs:
+      - test
+      - test-package:
+          requires:
+            - test
+      - publish:
+          requires:
+            - test-package
+          filters:
+            branches:
+              only:
+                - main
+                - develop

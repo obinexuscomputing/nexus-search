@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regex Search Demo</title>
+    <script type="module" src="../../dist/index.umd.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .highlight {
+            background-color: yellow;
+        }
+    </style>
+</head>
+<body>
+    <h1>Regex Search Demo</h1>
+    <input type="text" id="searchInput" placeholder="Enter regex pattern">
+    <button onclick="search()">Search</button>
+    <p id="text">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec odio. Praesent libero. Sed cursus ante dapibus diam.
+    </p>
+
+    <script>
+        function search() {
+            const input = document.getElementById('searchInput').value;
+            const regex = new RegExp(input, 'gi');
+            const textElement = document.getElementById('text');
+            const text = textElement.textContent;
+            const highlightedText = text.replace(regex, match => `<span class="highlight">${match}</span>`);
+            textElement.innerHTML = highlightedText;
+        }
+    </script>
+</body>
+</html>

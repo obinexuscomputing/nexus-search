@@ -1,0 +1,108 @@
+{
+  "name": "@obinexuscomputing/nexus-search",
+  "version": "0.1.57",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "description": "A high-performance search indexing and query system that uses a trie data structure and BFS/DFS algorithms for fast full-text search with fuzzy matching.",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "browser": "./dist/index.umd.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "funding": {
+    "type": "individual",
+    "url": "https://www.buymeacoffee.com/obinexuscomputing"
+  },
+  "scripts": {
+    "clean": "rimraf dist",
+    "prebuild": "npm run clean",
+    "build": "rollup -c",
+    "build:watch": "rollup -c -w",
+    "postbuild": "node scripts/verify-build.js",
+    "demo": "node fixtures/server.js",
+    "dev": "rollup -c -w",
+    "prepublishOnly": "npm run build",
+    "test": "jest",
+    "lint": "eslint src/ --ext .ts",
+    "format": "prettier --write src/**/*.ts",
+    "prepare": "npm run build"
+  },
+  "files": [
+    "dist/",
+    "src/",
+    "README.md",
+    "fixtures/",
+    "docs/",
+    "LICENSE",
+    "examples/"
+  ],
+  "dependencies": {
+    "idb": "^8.0.1",
+    "punycode": "^2.3.1",
+    "tslib": "^2.8.1"
+  },
+  "peerDependencies": {
+    "idb": ">=7.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.16.0",
+    "@rollup/plugin-alias": "^5.1.1",
+    "@rollup/plugin-commonjs": "^25.0.8",
+    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.10.2",
+    "@types/punycode": "^2.1.4",
+    "@typescript-eslint/eslint-plugin": "^5.57.1",
+    "@typescript-eslint/parser": "^5.57.1",
+    "alias": "^0.0.5",
+    "eslint": "^8.57.1",
+    "globals": "^15.12.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "prettier": "^2.8.7",
+    "rimraf": "^6.0.1",
+    "rollup": "^4.28.1",
+    "rollup-plugin-dts": "^6.1.1",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.16.0"
+  },
+  "directories": {
+    "doc": "docs",
+    "fixtures": "fixtures",
+    "dist": "dist",
+    "src": "src",
+    "test": "__tests__"
+  },
+  "keywords": [
+    "@obinexuscomputing/nexus-search",
+    "pagerank",
+    "seo",
+    "search",
+    "indexing",
+    "query",
+    "fuzzy matching",
+    "real-time updates",
+    "typescript",
+    "indexeddb",
+    "high-performance",
+    "nested fields",
+    "caching",
+    "nexus-search"
+  ],
+  "author": "Nnamdi Michael Okpala",
+  "license": "ISC",
+  "publishConfig": {
+    "access": "public"
+  }
+}
