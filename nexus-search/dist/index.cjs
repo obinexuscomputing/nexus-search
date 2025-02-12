@@ -1147,7 +1147,7 @@ class TrieSearch {
 class IndexMapper {
     constructor(state) {
         this.dataMapper = new DataMapper();
-        if (state === null || state === undefined ? undefined : state.dataMap) {
+        if (state === null || state === void 0 ? void 0 : state.dataMap) {
             this.dataMapper.importState(state.dataMap);
         }
         this.trieSearch = new TrieSearch();
@@ -1508,7 +1508,7 @@ function sortObjectKeys(obj) {
  * Helper function to generate consistent sort keys for documents
  */
 function generateSortKey(doc) {
-    if (!(doc === null || doc === undefined ? undefined : doc.id) || !doc.content) {
+    if (!(doc === null || doc === void 0 ? void 0 : doc.id) || !doc.content) {
         return '';
     }
     try {
@@ -1519,7 +1519,7 @@ function generateSortKey(doc) {
     }
 }
 function createSearchableFields(document, fields) {
-    if (!(document === null || document === undefined ? undefined : document.content)) {
+    if (!(document === null || document === void 0 ? void 0 : document.content)) {
         return {};
     }
     const result = {};
@@ -1774,7 +1774,6 @@ class IndexManager {
             id,
             content: createSearchableFields({
                 content: contentRecord,
-                id,
                 version: this.config.version.toString()
             }, this.config.fields),
             metadata: document.metadata
@@ -1926,7 +1925,7 @@ class IndexManager {
     async search(query, options = {}) {
         var _a, _b;
         // Handle null or undefined query
-        if (!(query === null || query === undefined ? undefined : query.trim()))
+        if (!(query === null || query === void 0 ? void 0 : query.trim()))
             return [];
         try {
             const searchResults = await this.indexMapper.search(query, {
@@ -2159,16 +2158,16 @@ class SearchEngine {
             ...config,
             search: {
                 ...config.search,
-                defaultOptions: ((_a = config.search) === null || _a === undefined ? undefined : _a.defaultOptions) || {}
+                defaultOptions: ((_a = config.search) === null || _a === void 0 ? void 0 : _a.defaultOptions) || {}
             }
         };
-        this.documentSupport = (_c = (_b = config.documentSupport) === null || _b === undefined ? undefined : _b.enabled) !== null && _c !== undefined ? _c : false;
+        this.documentSupport = (_c = (_b = config.documentSupport) === null || _b === void 0 ? void 0 : _b.enabled) !== null && _c !== void 0 ? _c : false;
         // Initialize core components
         this.indexManager = new IndexManager({
             name: config.name,
             version: config.version,
             fields: config.fields,
-            options: (_d = config.search) === null || _d === undefined ? undefined : _d.defaultOptions
+            options: (_d = config.search) === null || _d === void 0 ? void 0 : _d.defaultOptions
         });
         this.queryProcessor = new QueryProcessor();
         this.storage = new SearchStorage(config.storage);
@@ -2296,7 +2295,7 @@ class SearchEngine {
             return [];
         }
         const searchOptions = {
-            ...(_a = this.config.search) === null || _a === undefined ? undefined : _a.defaultOptions,
+            ...(_a = this.config.search) === null || _a === void 0 ? void 0 : _a.defaultOptions,
             ...options,
             fields: options.fields || this.config.fields
         };
@@ -2363,8 +2362,8 @@ class SearchEngine {
             version: doc.fields.version || '1.0'
         }, {
             ...doc.metadata,
-            indexed: ((_a = doc.metadata) === null || _a === undefined ? undefined : _a.indexed) || Date.now(),
-            lastModified: ((_b = doc.metadata) === null || _b === undefined ? undefined : _b.lastModified) || Date.now()
+            indexed: ((_a = doc.metadata) === null || _a === void 0 ? void 0 : _a.indexed) || Date.now(),
+            lastModified: ((_b = doc.metadata) === null || _b === void 0 ? void 0 : _b.lastModified) || Date.now()
         });
     }
     validateDocument(doc) {
@@ -2424,7 +2423,7 @@ class SearchEngine {
         }
         const normalizedDoc = this.normalizeDocument(document);
         await this.handleVersioning(normalizedDoc);
-        if (this.documentSupport && ((_b = (_a = this.config.documentSupport) === null || _a === undefined ? undefined : _a.versioning) === null || _b === undefined ? undefined : _b.enabled)) {
+        if (this.documentSupport && ((_b = (_a = this.config.documentSupport) === null || _a === void 0 ? void 0 : _a.versioning) === null || _b === void 0 ? void 0 : _b.enabled)) {
             await this.handleVersioning(normalizedDoc);
         }
         this.documents.set(normalizedDoc.id, normalizedDoc);
@@ -2437,10 +2436,10 @@ class SearchEngine {
     async performRegexSearch(query, options) {
         var _a, _b, _c, _d;
         const regexConfig = {
-            maxDepth: ((_a = options.regexConfig) === null || _a === undefined ? undefined : _a.maxDepth) || 50,
-            timeoutMs: ((_b = options.regexConfig) === null || _b === undefined ? undefined : _b.timeoutMs) || 5000,
-            caseSensitive: ((_c = options.regexConfig) === null || _c === undefined ? undefined : _c.caseSensitive) || false,
-            wholeWord: ((_d = options.regexConfig) === null || _d === undefined ? undefined : _d.wholeWord) || false
+            maxDepth: ((_a = options.regexConfig) === null || _a === void 0 ? void 0 : _a.maxDepth) || 50,
+            timeoutMs: ((_b = options.regexConfig) === null || _b === void 0 ? void 0 : _b.timeoutMs) || 5000,
+            caseSensitive: ((_c = options.regexConfig) === null || _c === void 0 ? void 0 : _c.caseSensitive) || false,
+            wholeWord: ((_d = options.regexConfig) === null || _d === void 0 ? void 0 : _d.wholeWord) || false
         };
         const regex = this.createRegexFromOption(options.regex || '');
         // Determine search strategy based on regex complexity
@@ -2624,7 +2623,7 @@ class SearchEngine {
         let score = 0;
         for (const field of searchFields) {
             const fieldContent = String(doc.fields[field] || '').toLowerCase();
-            const fieldBoost = (((_a = options.boost) === null || _a === undefined ? undefined : _a[field]) || 1);
+            const fieldBoost = (((_a = options.boost) === null || _a === void 0 ? void 0 : _a[field]) || 1);
             const termFrequency = (fieldContent.match(new RegExp(term, 'gi')) || []).length;
             score += termFrequency * fieldBoost;
         }
@@ -2838,7 +2837,7 @@ class SearchEngine {
         const existingDoc = this.getDocument(doc.id);
         if (!existingDoc)
             return;
-        const maxVersions = (_c = (_b = (_a = this.config.documentSupport) === null || _a === undefined ? undefined : _a.versioning) === null || _b === undefined ? undefined : _b.maxVersions) !== null && _c !== undefined ? _c : 10;
+        const maxVersions = (_c = (_b = (_a = this.config.documentSupport) === null || _a === void 0 ? void 0 : _a.versioning) === null || _b === void 0 ? void 0 : _b.maxVersions) !== null && _c !== void 0 ? _c : 10;
         const versions = existingDoc.versions || [];
         if (doc.fields.content !== existingDoc.fields.content) {
             versions.push({
@@ -2885,7 +2884,7 @@ class SearchEngine {
             throw new Error('Document support is not enabled');
         }
         const doc = this.getDocument(id);
-        return (_a = doc === null || doc === undefined ? undefined : doc.versions) === null || _a === undefined ? undefined : _a.find(v => v.version === version);
+        return (_a = doc === null || doc === void 0 ? void 0 : doc.versions) === null || _a === void 0 ? void 0 : _a.find(v => v.version === version);
     }
     getStats() {
         return {
