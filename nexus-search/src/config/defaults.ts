@@ -3,7 +3,7 @@ import {
     IndexingConfig, 
     SearchConfig, 
     DocumentConfig
-} from '../interfaces';
+} from './interfaces';
 
 export const defaultConfig = {
     name: 'default',

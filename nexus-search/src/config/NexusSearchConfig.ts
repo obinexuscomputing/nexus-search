@@ -1,15 +1,13 @@
+import { defaultConfig } from './defaults';
 import { 
     StorageConfig,
     IndexingConfig,
     SearchConfig,
     DocumentConfig,
-    PluginConfig,
-    ValidationConfig,
-    VersioningConfig
+    PluginConfig
 } from './interfaces';
-
 import { validateConfig } from './validation';
-import { defaultConfig } from './defaults';
+
 
 export class NexusSearchConfig {
     readonly name: string;
@@ -66,7 +64,7 @@ export class NexusSearchConfig {
         }
 
         if (mergedConfig.plugins) {
-            this.plugins = mergedConfig.plugins.map(plugin => ({
+            this.plugins = mergedConfig.plugins.map((plugin: PluginConfig) => ({
                 ...plugin,
                 enabled: plugin.enabled ?? true
             }));
