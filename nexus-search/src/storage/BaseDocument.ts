@@ -37,7 +37,7 @@ export class BaseDocument implements IndexedDocument {
         this.version = doc.fields?.version || '1.0';
         
         this.fields = this.normalizeFields(doc.fields);
-        this.metadata = this.normalizeMetadata(doc.metadata);
+        this.metadata = this.normalizeMetadata(doc.metadata || {});
         this.versions = doc.versions || [];
         this.relations = this.normalizeRelations(doc.relations || []);
         this.content = doc.content;
@@ -51,7 +51,7 @@ export class BaseDocument implements IndexedDocument {
             title: this.title,
             author: this.author,
             version: this.version,
-            metadata: this.metadata || {},
+            metadata: this.metadata,
             versions: this.versions,
             relations: this.relations,
             tags: this.tags
@@ -199,7 +199,7 @@ export class BaseDocument implements IndexedDocument {
             tags: [...this.tags],
             version: this.version,
             fields: { ...this.fields },
-            metadata: { ...this.metadata },
+            metadata: { ...this.metadata, lastModified: this.metadata?.lastModified ?? Date.now() },
             versions: [...this.versions],
             relations: [...this.relations],
             links: this.links ? [...this.links] : undefined,

@@ -34,7 +34,7 @@ export class SearchEngine {
    // Configuration and state
    private readonly config: SearchEngineConfig;
    private readonly documentSupport: boolean;
-   private isInitialized: boolean = false;
+   private isInitialized = false;
    
    // Data structures
    private readonly documents: Map<string, IndexedDocument>;
@@ -262,7 +262,8 @@ export class SearchEngine {
                                 matches,
                                 metadata: {
                                     ...document.metadata,
-                                    lastAccessed: Date.now()
+                                    lastAccessed: Date.now(),
+                                    lastModified: document.metadata?.lastModified ?? Date.now()
                                 },
                                 document: document,
                                 term: processedQuery
@@ -423,7 +424,8 @@ public async performRegexSearch(
             item: document,
             metadata: {
                 ...document.metadata,
-                lastAccessed: Date.now()
+                lastAccessed: Date.now(),
+                lastModified: document.metadata?.lastModified !== undefined ? document.metadata.lastModified : Date.now()
             }
         };
     }).filter(result => result.score >= (options.minScore || 0));
@@ -491,48 +493,51 @@ private isComplexRegex(regex: RegExp): boolean {
         pattern.length > 20  // Additional complexity check based on pattern length
     );
 }
-    public async processSearchResults(
-        results: RegexSearchResult[] | Array<{ id: string; score: number }>,
-        options: SearchOptions
-    ): Promise<SearchResult<IndexedDocument>[]> {
-        const processedResults: SearchResult<IndexedDocument>[] = [];
-    
-        for (const result of results) {
-            const doc = this.documents.get(result.id);
-            if (!doc) continue;
-    
-            const searchResult: SearchResult<IndexedDocument> = {
-                id: result.id,
-                docId: result.id,
-                item: doc,
-                score: (result as { score: number }).score ? this.normalizeScore((result as { score: number }).score) : (result as { score: number }).score,
-                matches: [],
-                metadata: {
-                    ...doc.metadata,
-                    lastAccessed: Date.now()
-                },
-                document: doc,
-                term: 'matched' in result ? String(result.matched) : '',
-            };
-    
-            if (options.includeMatches) {
-                if ('positions' in result) {
-                    // Handle regex search results
-                    searchResult.matches = this.extractRegexMatches(doc, result.positions as [number, number][], options);
-                } else {
-                    // Handle basic search results
-                    searchResult.matches = this.extractMatches(doc, options);
-                }
+
+public async processSearchResults(
+    results: RegexSearchResult[] | Array<{ id: string; score: number }>,
+    options: SearchOptions
+): Promise<SearchResult<IndexedDocument>[]> {
+    const processedResults: SearchResult<IndexedDocument>[] = [];
+    const now = Date.now();
+
+    for (const result of results) {
+        const doc = this.documents.get(result.id);
+        if (!doc) continue;
+
+        const searchResult: SearchResult<IndexedDocument> = {
+            id: result.id,
+            docId: result.id,
+            item: doc,
+            score: (result as { score: number }).score ? this.normalizeScore((result as { score: number }).score) : (result as { score: number }).score,
+            matches: [],
+            metadata: {
+                indexed: doc.metadata?.indexed ?? now,
+                lastModified: doc.metadata?.lastModified ?? now,
+                lastAccessed: now,
+                ...doc.metadata
+            },
+            document: doc,
+            term: 'matched' in result ? String(result.matched) : '',
+        };
+
+        if (options.includeMatches) {
+            if ('positions' in result) {
+                // Handle regex search results
+                searchResult.matches = this.extractRegexMatches(doc, result.positions as [number, number][], options);
+            } else {
+                // Handle basic search results
+                searchResult.matches = this.extractMatches(doc, options);
             }
-    
-            processedResults.push(searchResult);
         }
-    
-        return this.applyPagination(processedResults, options);
+
+        processedResults.push(searchResult);
     }
 
-  
-    public getTrieState(): unknown {
+    return this.applyPagination(processedResults, options);
+
+}
+public getTrieState(): unknown {
         return this.trie.serializeState();
     }
     
@@ -740,7 +745,7 @@ private isComplexRegex(regex: RegExp): boolean {
                 const updatedDoc = new IndexedDocument(
                     id,
                     { ...existingDoc.fields, ...update.fields },
-                    { ...existingDoc.metadata, ...update.metadata }
+                    { ...existingDoc.metadata ?? {}, ...update.metadata, lastModified: update.metadata?.lastModified ?? existingDoc.metadata?.lastModified ?? Date.now() }
                 );
                 updatePromises.push(this.updateDocument(updatedDoc));
             }

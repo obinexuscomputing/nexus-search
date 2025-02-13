@@ -17,8 +17,10 @@ export type DocumentContent = {
 // Metadata Types
 // ----------------
 export interface DocumentMetadata {
-    indexed?: number;
-    lastModified?: number;
+    author?: string;
+    tags?: string[];
+    version?: string;
+    lastModified: number;
     [key: string]: unknown;
 }
 
@@ -247,6 +249,7 @@ export interface NexusDocumentInput extends Partial<NexusDocument> {
     id?: string;
     content?: DocumentContent;
 }
+
 
 /**
  * Plugin configuration for NexusDocument

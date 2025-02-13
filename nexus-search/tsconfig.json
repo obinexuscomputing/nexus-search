@@ -26,6 +26,7 @@
       "@utils/*": ["src/utils/*"],
       "@types/*": ["src/types/*"],
       "@adapters/*": ["src/adapters/*"],
+      "@plugins/*": ["src/plugins/*"],
       
     },
     "plugins": [
