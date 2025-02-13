@@ -17,7 +17,6 @@ class NexusSearchBar {
 
         this.initialize();
     }
-
     async loadFile(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -55,16 +54,17 @@ class NexusSearchBar {
             }
         });
     }
-
     getFileType(filename) {
         const extension = filename.split('.').pop().toLowerCase();
         switch (extension) {
             case 'md':
-                return 'markdown';
+                return 'text/markdown';
             case 'html':
-                return 'html';
+                return 'text/html';
+            case 'txt':
+                return 'text/plain';
             default:
-                return 'text';
+                return 'application/octet-stream';
         }
     }
 
@@ -222,8 +222,10 @@ class NexusSearchBar {
                 const { title, content, type, author, id } = result.item;
                 
                 // Ensure content is a string
-                const contentStr = String(content || '');
-                const titleStr = String(title || '');
+                const contentStr = content ? String(content) : '';
+                const titleStr = title ? String(title) : '';
+                const typeStr = type ? String(type) : 'Unknown';
+                const authorStr = author ? String(author) : 'Unknown';
                 
                 const displayContent = contentStr.length > 200 
                     ? contentStr.slice(0, 200) + '...' 
@@ -233,8 +235,8 @@ class NexusSearchBar {
                     <div class="search-result" data-id="${id}">
                         <h3>${this.highlightText(titleStr, this.input.value || '')}</h3>
                         <div class="meta">
-                            <span class="author">By ${author}</span>
-                            <span class="type">Type: ${type}</span>
+                            <span class="author">By ${authorStr}</span>
+                            <span class="type">Type: ${typeStr}</span>
                         </div>
                         <p>${this.highlightText(displayContent, this.input.value || '')}</p>
                         <div class="score">Score: ${(result.score * 100).toFixed(0)}%</div>
