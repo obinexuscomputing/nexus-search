@@ -47,7 +47,10 @@ export class IndexMapper {
                     version: String(document.content.version || '1.0'),
                     ...document.content
                 },
-                metadata: document.metadata || {},
+                metadata: {
+                    lastModified: Date.now(),
+                    ...document.metadata
+                },
                 versions: [],
                 relations: [],
                 document: function () { return this; },
