@@ -5,7 +5,7 @@
 A high-performance search indexing and query system that uses a trie data structure and BFS/DFS algorithms for fast full-text search with fuzzy matching, real-time updates, and flexible configuration.
 
 # Repo:
-[https://github.com/obinexuscomputing/nexus-search](Nexus Search on Github)
+[https://gitlab.com/obinexuscomputing.pkg/nexus-search](Nexus Search on GitLab)
 
 ## Features
 

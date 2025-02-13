@@ -149,8 +149,11 @@ async function main() {
     } catch (error) {
         console.error('Error:', error);
     } finally {
-        await searchEngine.close();
+        await 
+        searchEngine.close();
     }
+
+    return 0;
 }
 
 main().catch(console.error);
