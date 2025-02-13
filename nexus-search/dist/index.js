@@ -677,10 +677,11 @@ class DataMapper {
         this.dataMap = new Map();
     }
     mapData(key, documentId) {
+        var _a, _b;
         if (!this.dataMap.has(key)) {
             this.dataMap.set(key, new Set());
         }
-        this.dataMap.get(key).add(documentId);
+        (_b = (_a = this.dataMap.get(key)) === null || _a === void 0 ? void 0 : _a.add(documentId)) !== null && _b !== void 0 ? _b : new Set().add(documentId);
     }
     getDocuments(key) {
         return this.dataMap.get(key) || new Set();
