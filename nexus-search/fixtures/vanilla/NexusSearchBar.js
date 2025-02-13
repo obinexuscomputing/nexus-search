@@ -295,59 +295,54 @@ class NexusSearchBar {
             timeout = setTimeout(() => func.apply(this, args), delay);
         };
     }
-}
 
-// Initialize search bar when DOM is loaded
+}
+// Usage in browser
 document.addEventListener('DOMContentLoaded', () => {
     const container = document.querySelector('.search-container');
     if (container) new NexusSearchBar(container);
-});
-// Usage in browser
-const uploader = new FileUploader();
+    
+    const fileInputElement = document.querySelector('#fileInput');
+    // File upload
+    if (fileInputElement) {
+        const uploader = new FileUploader();
+        fileInputElement.addEventListener('change', async (e) => {
+            try {
+                const files = e.target.files;
+                const result = await uploader.uploadFiles(files);
+                console.log('Files uploaded:', result);
+            } catch (error) {
+                console.error('Upload failed', error);
+            }
+        });
+    }
 
-// File upload
-document.querySelector('#fileInput').addEventListener('change', async (e) => {
-    try {
-        const files = e.target.files;
-        const result = await uploader.uploadFiles(files);
-        console.log('Files uploaded:', result);
-    } catch (error) {
-        console.error('Upload failed', error);
+    // Search
+    const uploader = new FileUploader();
+    const searchInput = document.querySelector('#searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', async (e) => {
+            const query = e.target.value.trim();
+            if (query.length > 2) {
+                try {
+                    const results = await uploader.searchFiles(query);
+                    displaySearchResults(results);
+                } catch (error) {
+                    console.error('Search failed', error);
+                }
+            }
+        });
     }
 });
 
-// Search 
-document.querySelector('#searchInput').addEventListener('input', async (e) => {
-    const query = e.target.value.trim();
-    if (query.length > 2) {
-        try {
-            const results = await uploader.searchFiles(query);
-            displaySearchResults(results);
-        } catch (error) {
-            console.error('Search failed', error);
-        }
-    }
-});
-
-// Function to display search results
 function displaySearchResults(results) {
-    const resultsContainer = document.querySelector('.search-results');
-    if (!resultsContainer) return;
-
-    resultsContainer.innerHTML = '';
-
-    if (!results.length) {
-        resultsContainer.innerHTML = '<p>No results found</p>';
-        return;
+    const searchResults = document.querySelector('#searchResults');
+    if (searchResults) {
+        searchResults.innerHTML = '';
+        results.forEach(result => {
+            const resultElement = document.createElement('div');
+            resultElement.textContent = result.title;
+            searchResults.appendChild(resultElement);
+        });
     }
-
-    results.forEach(result => {
-        const resultHTML = `
-            <div class="search-result">
-                <h3>${result.title}</h3>
-                <p>${result.content}</p>
-            </div>
-        `;
-        resultsContainer.insertAdjacentHTML('beforeend', resultHTML);
-    });
 }
