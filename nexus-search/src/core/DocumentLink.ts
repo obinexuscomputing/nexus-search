@@ -22,8 +22,8 @@ export class DocumentLink implements IDocumentLink {
         source: string,
         target: string, 
         type: string,
-        weight: number = 1.0,
-        url: string = ''
+        weight = 1.0,
+        url = ''
     ) {
         if (!source || !target) {
             throw new Error('Source and target IDs are required');

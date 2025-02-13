@@ -12,28 +12,34 @@ import { DocumentValue } from "@/types/document";
 import { createSearchableFields } from "@/utils";
 
 export class IndexManager {
-   initialize() {
-       this.documents = new Map();
-       this.indexMapper = new IndexMapper();
-       this.config = {
-           name: "default",
-           version: 1,
-           fields: ["content"],
-       };
-   }
-   
-    importDocuments(documents: IndexedDocument[]) {
+    initialize(): void {
+        this.documents = new Map();
+        this.indexMapper = new IndexMapper();
+        this.config = {
+            name: "default",
+            version: 1,
+            fields: [
+                "content",   // Document body/main text
+                "title",     // Document title
+                "metadata",  // Metadata information
+                "author",    // Document author
+                "tags",      // Associated tags
+                "type"       // Document type
+            ] // Comprehensive list of default fields
+        };
+    }
+    importDocuments(documents: IndexedDocument[]): void {
         documents.forEach(doc => {
             this.documents.set(doc.id, doc);
         });
     }
 
 
-   getSize() {
+   getSize(): number {
         return this.documents.size;
     }
     
-    getAllDocuments() {
+    getAllDocuments(): Map<string, IndexedDocument> {
         return this.documents;
         
     }

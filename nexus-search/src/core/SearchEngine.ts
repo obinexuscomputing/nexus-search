@@ -90,7 +90,7 @@ export class SearchEngine {
     * Initialize the search engine and its components
     */
 
-   async initialize() {
+   async initialize(): Promise<void> {
        if (this.isInitialized) return;
 
        try {
