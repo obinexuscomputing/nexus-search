@@ -292,12 +292,11 @@ export class SearchEngine {
         return new IndexedDocument(
             doc.id,
             {
-                ...doc.fields,
-                title: doc.fields.title || '',
-                content: doc.fields.content || '',
-                author: doc.fields.author || '',
-                tags: Array.isArray(doc.fields.tags) ? doc.fields.tags : [],
-                version: doc.fields.version || '1.0'
+                title: doc.fields?.title || '',
+                content: doc.fields?.content || '',
+                author: doc.fields?.author || '',
+                tags: Array.isArray(doc.fields?.tags) ? doc.fields.tags : [],
+                version: doc.fields?.version || '1.0'
             },
             {
                 ...doc.metadata,
