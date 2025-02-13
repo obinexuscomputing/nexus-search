@@ -205,7 +205,7 @@ class NexusSearchBar {
 
     renderResults(results) {
         if (!this.resultsContainer || !this.noResults) return;
-    
+        
         this.resultsContainer.innerHTML = '';
         
         if (!results.length) {
@@ -299,6 +299,8 @@ class NexusSearchBar {
     }
 
 }
+
+let uploader=  null;
 // Usage in browser
 document.addEventListener('DOMContentLoaded', () => {
     const container = document.querySelector('.search-container');
@@ -320,7 +322,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Search
-    const uploader = new FileUploader();
     const searchInput = document.querySelector('#searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', async (e) => {
