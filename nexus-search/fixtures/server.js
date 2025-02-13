@@ -57,6 +57,123 @@ function setCacheHeaders(res, ext) {
     }
 }
 
+class FileSearchServer {
+    constructor() {
+        this.searchIndex = [];
+    }
+
+    // File type validation
+    fileFilter(file) {
+        const allowedTypes = ['.md', '.html', '.txt'];
+        const ext = path.extname(file).toLowerCase();
+        return allowedTypes.includes(ext);
+    }
+
+    // Index file contents
+    async indexFile(filePath) {
+        try {
+            const content = await fs.promises.readFile(filePath, 'utf8');
+            const fileInfo = {
+                id: `file-${Date.now()}-${path.basename(filePath)}`,
+                filename: path.basename(filePath),
+                type: path.extname(filePath).substring(1),
+                content: content,
+                indexedAt: new Date()
+            };
+
+            this.searchIndex.push(fileInfo);
+            return fileInfo;
+        } catch (error) {
+            console.error('Indexing error:', error);
+            throw error;
+        }
+    }
+
+    // Search method
+    searchFiles(query) {
+        return this.searchIndex.filter(file => 
+            file.content.toLowerCase().includes(query.toLowerCase()) ||
+            file.filename.toLowerCase().includes(query.toLowerCase())
+        );
+    }
+
+    // Setup routes
+    async handleRequest(req, res) {
+        const url = new URL(req.url, `http://${req.headers.host}`);
+        const pathname = url.pathname;
+
+        if (req.method === 'POST' && pathname === '/upload') {
+            // Handle file upload
+            let body = '';
+            req.on('data', chunk => {
+                body += chunk.toString();
+            });
+            req.on('end', async () => {
+                try {
+                    const files = JSON.parse(body).files;
+                    const indexedFiles = [];
+
+                    for (const file of files) {
+                        if (this.fileFilter(file)) {
+                            const indexedFile = await this.indexFile(file);
+                            indexedFiles.push(indexedFile);
+                        } else {
+                            throw new Error('Unsupported file type');
+                        }
+                    }
+
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        message: 'Files uploaded and indexed successfully',
+                        files: indexedFiles
+                    }));
+                } catch (error) {
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ 
+                        error: 'Failed to upload or index files',
+                        details: error.message 
+                    }));
+                }
+            });
+        } else if (req.method === 'GET' && pathname === '/search') {
+            // Handle search
+            const query = url.searchParams.get('q');
+            if (!query) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Query is required' }));
+                return;
+            }
+
+            const results = this.searchFiles(query);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(results));
+        } else if (req.method === 'GET' && pathname === '/indexed-files') {
+            // List indexed files
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(this.searchIndex));
+        } else if (req.method === 'DELETE' && pathname === '/clear-index') {
+            // Clear index
+            this.searchIndex = [];
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'Search index cleared' }));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.end('Not Found');
+        }
+    }
+
+    // Start server
+    start(port = 3000) {
+        const server = http.createServer(this.handleRequest.bind(this));
+        server.listen(port, () => {
+            console.log(`File search server running on port ${port}`);
+        });
+    }
+}
+
+const fileSearchServer = new FileSearchServer();
+fileSearchServer.start();
+
 const server = http.createServer(async (req, res) => {
     try {
         // Set security headers
@@ -173,3 +290,9 @@ process.on('unhandledRejection', (reason) => {
     logger.error('Unhandled rejection:', reason);
     shutdown();
 });
+
+// How to run the server
+// node nexus-search/fixtures/server.js
+// Open http://localhost:3000/vanilla/ in your browser
+// Open http://localhost:3000/react/ in your browser
+// Open http://localhost:3000/vue/ in your browser

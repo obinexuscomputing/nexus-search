@@ -305,3 +305,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const container = document.querySelector('.search-container');
     if (container) new NexusSearchBar(container);
 });
+// Usage in browser
+const uploader = new FileUploader();
+
+// File upload
+document.querySelector('#fileInput').addEventListener('change', async (e) => {
+    try {
+        const files = e.target.files;
+        const result = await uploader.uploadFiles(files);
+        console.log('Files uploaded:', result);
+    } catch (error) {
+        console.error('Upload failed', error);
+    }
+});
+
+// Search 
+document.querySelector('#searchInput').addEventListener('input', async (e) => {
+    const query = e.target.value.trim();
+    if (query.length > 2) {
+        try {
+            const results = await uploader.searchFiles(query);
+            displaySearchResults(results);
+        } catch (error) {
+            console.error('Search failed', error);
+        }
+    }
+});
