@@ -182,6 +182,21 @@ interface NexusDocumentInput extends Partial<NexusDocument> {
     id?: string;
     content?: DocumentContent;
 }
+interface NormalizedDocument {
+    id: string;
+    fields: {
+        title: string;
+        content: string;
+        author: string;
+        tags: string[];
+        version: string;
+    };
+    metadata: {
+        indexed: number;
+        lastModified: number;
+        [key: string]: unknown;
+    };
+}
 /**
  * Plugin configuration for NexusDocument
  */
@@ -689,4 +704,4 @@ declare const NexusSearch: {
     readonly isSearchResult: typeof isSearchResult;
 };
 
-export { type AdvancedSearchOptions, type ArrayValue, type BaseEvent, type BaseFields, type CacheEntry, CacheError, type CacheOptions, type CacheStatus, type CacheStrategy, CacheStrategyType, ConfigError, type CreateDocumentOptions, type DatabaseConfig, type DocumentBase, type DocumentConfig, type DocumentContent, type DocumentLink, type DocumentMetadata, type DocumentRank, type DocumentRelation, type DocumentScore, type DocumentStatus, type DocumentValue, type DocumentVersion, type DocumentWorkflow, type ErrorEvent, type ExtendedSearchOptions, type IndexConfig, IndexError, type IndexNode, type IndexOptions, type IndexableFields, type IndexedDocument, type IndexedDocumentData, MapperError, type MapperOptions, type MapperState, type MetadataEntry, type MetricsResult, type NexusDocument, type NexusDocumentInput, type NexusDocumentMetadata, type NexusDocumentPluginConfig, type NexusFields, NexusSearch, type OptimizationOptions, type OptimizationResult, type PerformanceData, PerformanceError, type PerformanceMetric, type PerformanceMetrics, type PrimitiveValue, type QueryToken, type RegexSearchConfig, type RegexSearchResult, type RelationType, type ScoringMetrics, type Search, type SearchContext, type SearchDBSchema, type SearchEngineConfig, type SearchEngineOptions, SearchError, type SearchEvent, type SearchEventEmitter, SearchEventError, type SearchEventListener, type SearchEventType, type SearchMatch, type SearchNode, type SearchOptions, type SearchPagination, type SearchResult, type SearchScoreParams, type SearchStats, type SearchableDocument, type SearchableField, type SerializedIndex, type SerializedState, type SerializedTrieNode, type StorageConfig, type StorageEntry, StorageError, type StorageOptions, type SuccessEvent, type TextScore, type TokenInfo, type TrieSearchOptions, type ValidationConfig, ValidationError, type VersioningConfig, NexusSearch as default, isIndexConfig, isSearchOptions, isSearchResult };
+export { type AdvancedSearchOptions, type ArrayValue, type BaseEvent, type BaseFields, type CacheEntry, CacheError, type CacheOptions, type CacheStatus, type CacheStrategy, CacheStrategyType, ConfigError, type CreateDocumentOptions, type DatabaseConfig, type DocumentBase, type DocumentConfig, type DocumentContent, type DocumentLink, type DocumentMetadata, type DocumentRank, type DocumentRelation, type DocumentScore, type DocumentStatus, type DocumentValue, type DocumentVersion, type DocumentWorkflow, type ErrorEvent, type ExtendedSearchOptions, type IndexConfig, IndexError, type IndexNode, type IndexOptions, type IndexableFields, type IndexedDocument, type IndexedDocumentData, MapperError, type MapperOptions, type MapperState, type MetadataEntry, type MetricsResult, type NexusDocument, type NexusDocumentInput, type NexusDocumentMetadata, type NexusDocumentPluginConfig, type NexusFields, NexusSearch, type NormalizedDocument, type OptimizationOptions, type OptimizationResult, type PerformanceData, PerformanceError, type PerformanceMetric, type PerformanceMetrics, type PrimitiveValue, type QueryToken, type RegexSearchConfig, type RegexSearchResult, type RelationType, type ScoringMetrics, type Search, type SearchContext, type SearchDBSchema, type SearchEngineConfig, type SearchEngineOptions, SearchError, type SearchEvent, type SearchEventEmitter, SearchEventError, type SearchEventListener, type SearchEventType, type SearchMatch, type SearchNode, type SearchOptions, type SearchPagination, type SearchResult, type SearchScoreParams, type SearchStats, type SearchableDocument, type SearchableField, type SerializedIndex, type SerializedState, type SerializedTrieNode, type StorageConfig, type StorageEntry, StorageError, type StorageOptions, type SuccessEvent, type TextScore, type TokenInfo, type TrieSearchOptions, type ValidationConfig, ValidationError, type VersioningConfig, NexusSearch as default, isIndexConfig, isSearchOptions, isSearchResult };

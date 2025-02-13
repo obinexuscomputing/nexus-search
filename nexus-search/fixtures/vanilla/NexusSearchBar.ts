@@ -1,5 +1,17 @@
 class NexusSearchBar {
-    constructor(container) {
+    private container: HTMLElement;
+    private searchEngine: any;
+    private searchTimeout: number | null;
+    private posts: any[];
+
+    // Cache DOM elements
+    private input: HTMLInputElement | null;
+    private spinner: HTMLElement | null;
+    private errorMessage: HTMLElement | null;
+    private resultsContainer: HTMLElement | null;
+    private noResults: HTMLElement | null;
+
+    constructor(container: HTMLElement) {
         this.container = container;
         this.searchEngine = null;
         this.searchTimeout = null;
@@ -15,7 +27,7 @@ class NexusSearchBar {
         this.initialize();
     }
 
-    async fetchPosts() {
+    async fetchPosts(): Promise<any[]> {
         try {
             this.showLoading();
 
@@ -31,58 +43,44 @@ class NexusSearchBar {
             const posts = await postsResponse.json();
             const comments = await commentsResponse.json();
 
-            const commentsByPost = comments.reduce((acc, comment) => {
+            const commentsByPost = comments.reduce((acc: Record<number, any[]>, comment: any) => {
                 if (!acc[comment.postId]) acc[comment.postId] = [];
                 acc[comment.postId].push(comment);
                 return acc;
             }, {});
 
-            return posts.map(post => {
-                // Normalize document to ensure all required fields exist
-                return {
-                    id: `post-${post.id}`,
-                    title: this.capitalizeFirstLetter(post.title || ''),
-                    content: this.capitalizeFirstLetter(post.body || ''),
-                    body: this.capitalizeFirstLetter(post.body || ''), // Add body for compatibility
-                    fields: {
-                        title: this.capitalizeFirstLetter(post.title || ''),
-                        content: this.capitalizeFirstLetter(post.body || ''),
-                        body: this.capitalizeFirstLetter(post.body || '')
-                    },
-                    tags: [
-                        'blog',
-                        `user-${post.userId}`,
-                        `post-${post.id}`,
-                        ...(commentsByPost[post.id] ? ['has-comments'] : [])
-                    ],
-                    comments: commentsByPost[post.id] || [],
-                    author: `User ${post.userId}`,
-                    type: 'post'
-                };
-            });
+            return posts.map((post: any) => ({
+                id: `post-${post.id}`,  // Ensure unique ID
+                title: this.capitalizeFirstLetter(post.title),
+                content: this.capitalizeFirstLetter(post.body),
+                tags: [
+                    'blog',
+                    `user-${post.userId}`,
+                    `post-${post.id}`,
+                    ...(commentsByPost[post.id] ? ['has-comments'] : [])
+                ],
+                comments: commentsByPost[post.id] || [],
+                author: `User ${post.userId}`,
+                type: 'post'  // Add type for consistent document structure
+            }));
 
         } catch (error) {
-            console.error('Fetch posts error:', error);
-            throw new Error(`Failed to fetch posts: ${error.message}`);
+            throw new Error(`Failed to fetch posts: ${error instanceof Error ? error.message : String(error)}`);
         } finally {
             this.hideLoading();
         }
     }
 
-    capitalizeFirstLetter(string) {
-        return string && typeof string === 'string' 
-            ? string.charAt(0).toUpperCase() + string.slice(1) 
-            : '';
+    capitalizeFirstLetter(string: string): string {
+        return string ? string.charAt(0).toUpperCase() + string.slice(1) : '';
     }
 
-    async initialize() {
+    async initialize(): Promise<void> {
         try {
             this.showLoading();
 
-            // More robust check for NexusSearch library
-            if (typeof window === 'undefined' || 
-                !window.NexusSearch || 
-                !window.NexusSearch.SearchEngine) {
+            // Check for NexusSearch library with more robust check
+            if (typeof window === 'undefined' || !window.NexusSearch || !window.NexusSearch.SearchEngine) {
                 throw new Error('NexusSearch library not loaded or incomplete');
             }
 
@@ -90,8 +88,8 @@ class NexusSearchBar {
             this.searchEngine = new window.NexusSearch.SearchEngine({
                 name: 'nexus-search-bar',
                 version: 1,
-                fields: ['title', 'content', 'body', 'tags', 'author', 'type'],
-                storage: { type: 'memory' }
+                fields: ['title', 'content', 'tags', 'author', 'type'],
+                storage: { type: 'memory' }  // Specify storage type
             });
 
             await this.searchEngine.initialize();
@@ -99,50 +97,35 @@ class NexusSearchBar {
             // Fetch and add posts with error handling
             this.posts = await this.fetchPosts();
             
-            // Validate and normalize documents before adding
+            // Validate documents before adding
             const validDocuments = this.posts.filter(doc => 
-                doc.id && 
-                (doc.title || doc.content) && 
-                typeof doc.id === 'string'
+                doc.id && doc.title && doc.content
             );
 
             if (validDocuments.length === 0) {
                 throw new Error('No valid documents to add to search index');
             }
 
-            // Ensure each document has a 'fields' property with required fields
-            const normalizedDocs = validDocuments.map(doc => ({
-                ...doc,
-                fields: {
-                    title: doc.title || '',
-                    content: doc.content || doc.body || '',
-                    body: doc.body || '',
-                    tags: doc.tags || [],
-                    author: doc.author || '',
-                    type: doc.type || 'post'
-                }
-            }));
-
-            await this.searchEngine.addDocuments(normalizedDocs);
+            await this.searchEngine.addDocuments(validDocuments);
 
             this.setupEventListeners();
 
         } catch (error) {
-            console.error('Initialization error:', error);
-            this.showError(`Initialization error: ${error.message}`);
+            this.showError(`Initialization error: ${error instanceof Error ? error.message : String(error)}`);
         } finally {
             this.hideLoading();
         }
     }
 
-    setupEventListeners() {
+    setupEventListeners(): void {
         if (this.input) {
             this.input.addEventListener('input', this.debounce(this.handleSearchInput.bind(this), 300));
         }
     }
 
-    async handleSearchInput(event) {
-        const query = event.target.value.trim();
+    async handleSearchInput(event: Event): Promise<void> {
+        const target = event.target as HTMLInputElement;
+        const query = target.value.trim();
         
         if (!query) return this.clearResults();
 
@@ -154,18 +137,17 @@ class NexusSearchBar {
             const results = await this.searchEngine.search(query, { 
                 fuzzy: true, 
                 maxResults: 10,
-                threshold: 0.2,
-                fields: ['title', 'content', 'body', 'tags']
+                threshold: 0.2  // Add threshold for more relevant results
             });
             this.renderResults(results);
 
         } catch (error) {
-            console.error('Search error:', error);
             this.showError('Search failed. Please try again.');
+            console.error('Search error:', error);
         }
     }
 
-    renderResults(results) {
+    renderResults(results: any[]): void {
         if (!this.resultsContainer || !this.noResults) return;
 
         this.resultsContainer.innerHTML = '';
@@ -180,20 +162,19 @@ class NexusSearchBar {
         this.resultsContainer.style.display = 'block';
 
         results.forEach(result => {
-            const { title, content, body, tags, comments, author, id } = result.item;
-            const displayContent = content || body || '';
+            const { title, content, tags, comments, author, id } = result.item;
             const commentPreview = comments && comments.length
                 ? `<div class="comments-preview"><strong>${comments.length} comments</strong><p>${comments[0].body.slice(0, 100)}...</p></div>`
                 : '';
 
             const resultHTML = `
                 <div class="search-result" data-id="${id}">
-                    <h3>${this.highlightText(title, this.input.value || '')}</h3>
+                    <h3>${this.highlightText(title, this.input?.value || '')}</h3>
                     <div class="meta">
                         <span class="author">By ${author}</span>
                         <span class="post-id">${id}</span>
                     </div>
-                    <p>${this.highlightText(displayContent, this.input.value || '')}</p>
+                    <p>${this.highlightText(content, this.input?.value || '')}</p>
                     ${commentPreview}
                     <div class="tags">
                         ${tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
@@ -206,39 +187,39 @@ class NexusSearchBar {
     }
 
     // Helper method to highlight search terms
-    highlightText(text, searchTerm) {
-        if (!searchTerm || !text) return text;
+    highlightText(text: string, searchTerm: string): string {
+        if (!searchTerm) return text;
         const regex = new RegExp(`(${searchTerm})`, 'gi');
         return text.replace(regex, '<span class="highlight">$1</span>');
     }
 
-    clearResults() {
+    clearResults(): void {
         if (this.resultsContainer) this.resultsContainer.innerHTML = '';
         if (this.noResults) this.noResults.style.display = 'none';
     }
 
-    showLoading() {
+    showLoading(): void {
         if (this.spinner) this.spinner.style.display = 'block';
         if (this.input) this.input.disabled = true;
     }
 
-    hideLoading() {
+    hideLoading(): void {
         if (this.spinner) this.spinner.style.display = 'none';
         if (this.input) this.input.disabled = false;
     }
 
-    showError(message) {
+    showError(message: string): void {
         if (this.errorMessage) {
             this.errorMessage.textContent = message;
             this.errorMessage.style.display = 'block';
         }
     }
 
-    debounce(func, delay) {
-        let timeout;
-        return (...args) => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(this, args), delay);
+    debounce(func: Function, delay: number): (...args: any[]) => void {
+        let timeout: number;
+        return (...args: any[]) => {
+            window.clearTimeout(timeout);
+            timeout = window.setTimeout(() => func.apply(this, args), delay);
         };
     }
 }
@@ -246,5 +227,5 @@ class NexusSearchBar {
 // Initialize search bar when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     const container = document.querySelector('.search-container');
-    if (container) new NexusSearchBar(container);
+    if (container) new NexusSearchBar(container as HTMLElement);
 });

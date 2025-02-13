@@ -2372,21 +2372,6 @@ class SearchEngine {
             throw new Error(`Search failed: ${error}`);
         }
     }
-    normalizeDocument(doc) {
-        var _a, _b;
-        return new IndexedDocument(doc.id, {
-            ...doc.fields,
-            title: doc.fields.title || '',
-            content: doc.fields.content || '',
-            author: doc.fields.author || '',
-            tags: Array.isArray(doc.fields.tags) ? doc.fields.tags : [],
-            version: doc.fields.version || '1.0'
-        }, {
-            ...doc.metadata,
-            indexed: ((_a = doc.metadata) === null || _a === void 0 ? void 0 : _a.indexed) || Date.now(),
-            lastModified: ((_b = doc.metadata) === null || _b === void 0 ? void 0 : _b.lastModified) || Date.now()
-        });
-    }
     validateDocument(doc) {
         return (typeof doc.id === 'string' &&
             doc.id.length > 0 &&
@@ -2437,16 +2422,47 @@ class SearchEngine {
                 return 'draft';
         }
     }
+    normalizeDocument(doc) {
+        var _a, _b;
+        // Ensure doc has a fields object, defaulting to an empty object if not present
+        const fields = doc.fields || {};
+        // Create a new IndexedDocument with normalized and default values
+        return new IndexedDocument(doc.id, // Preserve original ID
+        {
+            // Normalize core fields with defaults
+            // Preserve other potential fields from the original document
+            ...fields,
+            // Additional fields with fallbacks
+            links: doc.links || [],
+            ranks: doc.ranks || [],
+            // Ensure content is normalized
+            body: fields.body || '', // Additional fallback for body
+            type: fields.type || 'document' // Add a default type
+        }, {
+            // Normalize metadata with defaults
+            ...(doc.metadata || {}),
+            indexed: ((_a = doc.metadata) === null || _a === void 0 ? void 0 : _a.indexed) || Date.now(),
+            lastModified: ((_b = doc.metadata) === null || _b === void 0 ? void 0 : _b.lastModified) || Date.now(),
+            // Preserve other metadata properties
+            ...doc.metadata
+        });
+    }
     async updateDocument(document) {
         var _a, _b;
         if (!this.isInitialized) {
             await this.initialize();
         }
+        // Normalize the document while preserving as much of the original structure as possible
         const normalizedDoc = this.normalizeDocument(document);
-        await this.handleVersioning(normalizedDoc);
+        // Validate the normalized document
+        if (!this.validateDocument(normalizedDoc)) {
+            throw new Error(`Invalid document structure: ${document.id}`);
+        }
+        // Handle versioning if enabled
         if (this.documentSupport && ((_b = (_a = this.config.documentSupport) === null || _a === void 0 ? void 0 : _a.versioning) === null || _b === void 0 ? void 0 : _b.enabled)) {
             await this.handleVersioning(normalizedDoc);
         }
+        // Update documents, trie, and index manager
         this.documents.set(normalizedDoc.id, normalizedDoc);
         this.trie.addDocument(normalizedDoc);
         await this.indexManager.updateDocument(normalizedDoc);

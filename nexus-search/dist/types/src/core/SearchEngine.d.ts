@@ -25,7 +25,6 @@ export declare class SearchEngine {
     addDocument(document: IndexedDocument): Promise<void>;
     addDocuments(documents: IndexedDocument[]): Promise<void>;
     search<T>(query: string, options?: SearchOptions): Promise<SearchResult<T>[]>;
-    private normalizeDocument;
     private validateDocument;
     /**
      * Helper method to normalize document content
@@ -39,6 +38,7 @@ export declare class SearchEngine {
      * Helper method to normalize document status
      */
     normalizeStatus(status: unknown): DocumentStatus | undefined;
+    normalizeDocument(doc: IndexedDocument): IndexedDocument;
     updateDocument(document: IndexedDocument): Promise<void>;
     /**
      * Performs regex-based search using either BFS or DFS traversal
