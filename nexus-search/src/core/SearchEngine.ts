@@ -14,7 +14,6 @@ import {
     RegexSearchConfig,
     RegexSearchResult,
     DocumentValue,
-    NormalizedDocument,
 
     
 } from "@/types";
