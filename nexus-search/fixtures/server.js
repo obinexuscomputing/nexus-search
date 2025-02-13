@@ -2,13 +2,14 @@ import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import process from 'node:process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.join(__dirname, '..');
 
 // Configuration
 const CONFIG = {
-    port: process.env.PORT || 3000,
+    port: process.env.PORT || 8085,
     defaultDemo: 'vanilla',
     mimeTypes: {
         '.html': 'text/html',
@@ -163,7 +164,7 @@ class FileSearchServer {
     }
 
     // Start server
-    start(port = 3000) {
+    start(port = 8085) {
         const server = http.createServer(this.handleRequest.bind(this));
         server.listen(port, () => {
             console.log(`File search server running on port ${port}`);
@@ -172,7 +173,7 @@ class FileSearchServer {
 }
 
 const fileSearchServer = new FileSearchServer();
-fileSearchServer.start();
+fileSearchServer.start(8086); // Use a different port for FileSearchServer
 
 const server = http.createServer(async (req, res) => {
     try {
@@ -182,7 +183,7 @@ const server = http.createServer(async (req, res) => {
         res.setHeader('X-XSS-Protection', '1; mode=block');
 
         // Clean up URL and prevent directory traversal
-        const safePath = path.normalize(req.url).replace(/^(\.\.[\/\\])+/, '');
+        const safePath = path.normalize(req.url).replace(/^(\.\.[/\\])+/, '');
         
         // Log request
         logger.info(`${req.method} ${safePath}`);
@@ -293,6 +294,6 @@ process.on('unhandledRejection', (reason) => {
 
 // How to run the server
 // node nexus-search/fixtures/server.js
-// Open http://localhost:3000/vanilla/ in your browser
-// Open http://localhost:3000/react/ in your browser
-// Open http://localhost:3000/vue/ in your browser
+// Open http://localhost:8085/vanilla/ in your browser
+// Open http://localhost:8085/react/ in your browser
+// Open http://localhost:8085/vue/ in your browser
