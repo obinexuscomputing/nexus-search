@@ -203,7 +203,7 @@ class NexusSearchBar {
 
     renderResults(results) {
         if (!this.resultsContainer || !this.noResults) return;
-
+    
         this.resultsContainer.innerHTML = '';
         
         if (!results.length) {
@@ -211,29 +211,56 @@ class NexusSearchBar {
             this.resultsContainer.style.display = 'none';
             return;
         }
-
+    
         this.noResults.style.display = 'none';
         this.resultsContainer.style.display = 'block';
-
+    
         results.forEach(result => {
-            const { title, content, type, author, id } = result.item;
-            const displayContent = content.length > 200 
-                ? content.slice(0, 200) + '...' 
-                : content;
-
-            const resultHTML = `
-                <div class="search-result" data-id="${id}">
-                    <h3>${this.highlightText(title, this.input.value || '')}</h3>
-                    <div class="meta">
-                        <span class="author">By ${author}</span>
-                        <span class="type">Type: ${type}</span>
+            try {
+                const { title, content, type, author, id } = result.item;
+                
+                // Ensure content is a string
+                const contentStr = String(content || '');
+                const titleStr = String(title || '');
+                
+                const displayContent = contentStr.length > 200 
+                    ? contentStr.slice(0, 200) + '...' 
+                    : contentStr;
+    
+                const resultHTML = `
+                    <div class="search-result" data-id="${id}">
+                        <h3>${this.highlightText(titleStr, this.input.value || '')}</h3>
+                        <div class="meta">
+                            <span class="author">By ${author}</span>
+                            <span class="type">Type: ${type}</span>
+                        </div>
+                        <p>${this.highlightText(displayContent, this.input.value || '')}</p>
+                        <div class="score">Score: ${(result.score * 100).toFixed(0)}%</div>
                     </div>
-                    <p>${this.highlightText(displayContent, this.input.value || '')}</p>
-                    <div class="score">Score: ${(result.score * 100).toFixed(0)}%</div>
-                </div>
-            `;
-            this.resultsContainer.insertAdjacentHTML('beforeend', resultHTML);
+                `;
+                this.resultsContainer.insertAdjacentHTML('beforeend', resultHTML);
+            } catch (error) {
+                console.error('Error rendering result:', error, result);
+            }
         });
+    }
+    
+    highlightText(text, searchTerm) {
+        // Ensure both text and searchTerm are strings
+        if (!searchTerm || !text) return text;
+        
+        try {
+            // Convert to string and escape special regex characters
+            const safeText = String(text);
+            const safeSearchTerm = String(searchTerm)
+                .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            
+            const regex = new RegExp(`(${safeSearchTerm})`, 'gi');
+            return safeText.replace(regex, '<span class="highlight">$1</span>');
+        } catch (error) {
+            console.error('Highlight error:', error);
+            return text;
+        }
     }
 
     highlightText(text, searchTerm) {
