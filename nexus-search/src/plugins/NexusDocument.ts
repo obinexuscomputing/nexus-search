@@ -166,7 +166,7 @@ export class NexusDocumentPlugin {
                 
                 const nexusFields: NexusFields = {
                     title: originalDoc?.title || '',
-                    content: originalDoc?.content || {},
+                    content: typeof originalDoc?.content === 'string' ? { text: originalDoc.content } : originalDoc?.content || { text: '' },
                     author: originalDoc?.metadata?.author as string || '',
                     tags: Array.isArray(originalDoc?.metadata?.tags) ? originalDoc.metadata.tags : [],
                     version: originalDoc?.metadata?.version as string || '1.0',
