@@ -9,7 +9,7 @@ export class DataMapper {
     if (!this.dataMap.has(key)) {
       this.dataMap.set(key, new Set());
     }
-    this.dataMap.get(key)!.add(documentId);
+    this.dataMap.get(key)?.add(documentId) ?? new Set().add(documentId);
   }
 
   getDocuments(key: string): Set<string> {
