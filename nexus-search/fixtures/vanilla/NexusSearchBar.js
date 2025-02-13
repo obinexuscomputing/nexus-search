@@ -1,4 +1,4 @@
-import {FileUploader} from './FileUploader.js';
+import { FileUploader } from './FileUploader.js';
 
 class NexusSearchBar {
     constructor(container) {
@@ -17,6 +17,7 @@ class NexusSearchBar {
 
         this.initialize();
     }
+
     async loadFile(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -24,7 +25,7 @@ class NexusSearchBar {
                 try {
                     const content = e.target.result;
                     const fileType = this.getFileType(file.name);
-                    
+
                     const documentData = {
                         id: `doc-${Date.now()}-${file.name}`,
                         title: file.name,
@@ -45,7 +46,7 @@ class NexusSearchBar {
                 }
             };
             reader.onerror = reject;
-            
+
             // Read file based on its type
             if (this.isTextBasedFile(file.name)) {
                 reader.readAsText(file);
@@ -54,6 +55,7 @@ class NexusSearchBar {
             }
         });
     }
+
     getFileType(filename) {
         const extension = filename.split('.').pop().toLowerCase();
         switch (extension) {
@@ -74,8 +76,8 @@ class NexusSearchBar {
     }
 
     capitalizeFirstLetter(string) {
-        return string && typeof string === 'string' 
-            ? string.charAt(0).toUpperCase() + string.slice(1) 
+        return string && typeof string === 'string'
+            ? string.charAt(0).toUpperCase() + string.slice(1)
             : '';
     }
 
@@ -112,8 +114,8 @@ class NexusSearchBar {
             this.showLoading();
 
             // More robust check for NexusSearch library
-            if (typeof window === 'undefined' || 
-                !window.NexusSearch || 
+            if (typeof window === 'undefined' ||
+                !window.NexusSearch ||
                 !window.NexusSearch.SearchEngine) {
                 throw new Error('NexusSearch library not loaded or incomplete');
             }
@@ -133,11 +135,11 @@ class NexusSearchBar {
                 this.fileInput.addEventListener('change', async () => {
                     try {
                         const documents = await this.fetchDocuments();
-                        
+
                         // Validate and normalize documents before adding
-                        const validDocuments = documents.filter(doc => 
-                            doc.id && 
-                            (doc.title || doc.content) && 
+                        const validDocuments = documents.filter(doc =>
+                            doc.id &&
+                            (doc.title || doc.content) &&
                             typeof doc.id === 'string'
                         );
 
@@ -182,7 +184,7 @@ class NexusSearchBar {
 
     async handleSearchInput(event) {
         const query = event.target.value.trim();
-        
+
         if (!query) return this.clearResults();
 
         try {
@@ -190,8 +192,8 @@ class NexusSearchBar {
                 throw new Error('Search engine not initialized');
             }
 
-            const results = await this.searchEngine.search(query, { 
-                fuzzy: true, 
+            const results = await this.searchEngine.search(query, {
+                fuzzy: true,
                 maxResults: 10,
                 threshold: 0.2,
                 fields: ['title', 'content', 'type']
@@ -205,32 +207,32 @@ class NexusSearchBar {
 
     renderResults(results) {
         if (!this.resultsContainer || !this.noResults) return;
-        
+
         this.resultsContainer.innerHTML = '';
-        
+
         if (!results.length) {
             this.noResults.style.display = 'block';
             this.resultsContainer.style.display = 'none';
             return;
         }
-    
+
         this.noResults.style.display = 'none';
         this.resultsContainer.style.display = 'block';
-    
+
         results.forEach(result => {
             try {
                 const { title, content, type, author, id } = result.item;
-                
+
                 // Ensure content is a string
                 const contentStr = content ? String(content) : '';
                 const titleStr = title ? String(title) : '';
                 const typeStr = type ? String(type) : 'Unknown';
                 const authorStr = author ? String(author) : 'Unknown';
-                
-                const displayContent = contentStr.length > 200 
-                    ? contentStr.slice(0, 200) + '...' 
+
+                const displayContent = contentStr.length > 200
+                    ? contentStr.slice(0, 200) + '...'
                     : contentStr;
-    
+
                 const resultHTML = `
                     <div class="search-result" data-id="${id}">
                         <h3>${this.highlightText(titleStr, this.input.value || '')}</h3>
@@ -248,17 +250,17 @@ class NexusSearchBar {
             }
         });
     }
-    
+
     highlightText(text, searchTerm) {
         // Ensure both text and searchTerm are strings
         if (!searchTerm || !text) return text;
-        
+
         try {
             // Convert to string and escape special regex characters
             const safeText = String(text);
             const safeSearchTerm = String(searchTerm)
                 .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            
+
             const regex = new RegExp(`(${safeSearchTerm})`, 'gi');
             return safeText.replace(regex, '<span class="highlight">$1</span>');
         } catch (error) {
@@ -266,7 +268,6 @@ class NexusSearchBar {
             return text;
         }
     }
-
 
     clearResults() {
         if (this.resultsContainer) this.resultsContainer.innerHTML = '';
@@ -297,15 +298,13 @@ class NexusSearchBar {
             timeout = setTimeout(() => func.apply(this, args), delay);
         };
     }
-
 }
 
-let uploader=  null;
 // Usage in browser
 document.addEventListener('DOMContentLoaded', () => {
     const container = document.querySelector('.search-container');
     if (container) new NexusSearchBar(container);
-    
+
     const fileInputElement = document.querySelector('#fileInput');
     // File upload
     if (fileInputElement) {
