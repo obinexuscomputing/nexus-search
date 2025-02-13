@@ -1757,7 +1757,14 @@ class IndexManager {
         this.config = {
             name: "default",
             version: 1,
-            fields: ["content"],
+            fields: [
+                "content", // Document body/main text
+                "title", // Document title
+                "metadata", // Metadata information
+                "author", // Document author
+                "tags", // Associated tags
+                "type" // Document type
+            ] // Comprehensive list of default fields
         };
     }
     importDocuments(documents) {
