@@ -14,6 +14,7 @@ import {
     RegexSearchConfig,
     RegexSearchResult,
     DocumentValue,
+    NormalizedDocument,
 
     
 } from "@/types";
@@ -288,23 +289,7 @@ export class SearchEngine {
         }
     }
 
-    private normalizeDocument(doc: IndexedDocument): IndexedDocument {
-        return new IndexedDocument(
-            doc.id,
-            {
-                title: doc.fields?.title || '',
-                content: doc.fields?.content || '',
-                author: doc.fields?.author || '',
-                tags: Array.isArray(doc.fields?.tags) ? doc.fields.tags : [],
-                version: doc.fields?.version || '1.0'
-            },
-            {
-                ...doc.metadata,
-                indexed: doc.metadata?.indexed || Date.now(),
-                lastModified: doc.metadata?.lastModified || Date.now()
-            }
-        );
-    }
+   
 
     private validateDocument(doc: IndexedDocument): boolean {
         return (
@@ -354,25 +339,62 @@ export class SearchEngine {
         }
     }
 
-  
 
+    public normalizeDocument(doc: IndexedDocument): IndexedDocument {
+        // Ensure doc has a fields object, defaulting to an empty object if not present
+        const fields = doc.fields || {};
+    
+        // Create a new IndexedDocument with normalized and default values
+        return new IndexedDocument(
+            doc.id, // Preserve original ID
+            {
+                // Normalize core fields with defaults
+                // Preserve other potential fields from the original document
+                ...fields,
+
+                // Additional fields with fallbacks
+                links: doc.links as unknown as DocumentValue || [],
+                ranks: doc.ranks as unknown as DocumentValue || [],
+                
+                // Ensure content is normalized
+                body: fields.body || '', // Additional fallback for body
+                type: fields.type || 'document' // Add a default type
+            },
+            {
+                // Normalize metadata with defaults
+                ...(doc.metadata || {}),
+                indexed: doc.metadata?.indexed || Date.now(),
+                lastModified: doc.metadata?.lastModified || Date.now(),
+                
+                // Preserve other metadata properties
+                ...doc.metadata
+            }
+        );
+    }
+    
     public async updateDocument(document: IndexedDocument): Promise<void> {
         if (!this.isInitialized) {
             await this.initialize();
         }
-
+    
+        // Normalize the document while preserving as much of the original structure as possible
         const normalizedDoc = this.normalizeDocument(document);
-        await this.handleVersioning(normalizedDoc);
-
+    
+        // Validate the normalized document
+        if (!this.validateDocument(normalizedDoc)) {
+            throw new Error(`Invalid document structure: ${document.id}`);
+        }
+    
+        // Handle versioning if enabled
         if (this.documentSupport && this.config.documentSupport?.versioning?.enabled) {
             await this.handleVersioning(normalizedDoc);
         }
-
+    
+        // Update documents, trie, and index manager
         this.documents.set(normalizedDoc.id, normalizedDoc);
         this.trie.addDocument(normalizedDoc);
         await this.indexManager.updateDocument(normalizedDoc);
-    }  
-
+    }
 
 
 /**

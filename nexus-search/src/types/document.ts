@@ -250,6 +250,21 @@ export interface NexusDocumentInput extends Partial<NexusDocument> {
     content?: DocumentContent;
 }
 
+export interface NormalizedDocument {
+    id: string;
+    fields: {
+        title: string;
+        content: string;
+        author: string;
+        tags: string[];
+        version: string;
+    };
+    metadata: {
+        indexed: number;
+        lastModified: number;
+        [key: string]: unknown;
+    };
+}
 
 /**
  * Plugin configuration for NexusDocument
