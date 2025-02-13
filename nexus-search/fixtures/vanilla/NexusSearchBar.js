@@ -17,7 +17,6 @@ class NexusSearchBar {
 
         this.initialize();
     }
-
     async loadFile(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -55,16 +54,17 @@ class NexusSearchBar {
             }
         });
     }
-
     getFileType(filename) {
         const extension = filename.split('.').pop().toLowerCase();
         switch (extension) {
             case 'md':
-                return 'markdown';
+                return 'text/markdown';
             case 'html':
-                return 'html';
+                return 'text/html';
+            case 'txt':
+                return 'text/plain';
             default:
-                return 'text';
+                return 'application/octet-stream';
         }
     }
 
@@ -222,8 +222,10 @@ class NexusSearchBar {
                 const { title, content, type, author, id } = result.item;
                 
                 // Ensure content is a string
-                const contentStr = String(content || '');
-                const titleStr = String(title || '');
+                const contentStr = content ? String(content) : '';
+                const titleStr = title ? String(title) : '';
+                const typeStr = type ? String(type) : 'Unknown';
+                const authorStr = author ? String(author) : 'Unknown';
                 
                 const displayContent = contentStr.length > 200 
                     ? contentStr.slice(0, 200) + '...' 
@@ -233,8 +235,8 @@ class NexusSearchBar {
                     <div class="search-result" data-id="${id}">
                         <h3>${this.highlightText(titleStr, this.input.value || '')}</h3>
                         <div class="meta">
-                            <span class="author">By ${author}</span>
-                            <span class="type">Type: ${type}</span>
+                            <span class="author">By ${authorStr}</span>
+                            <span class="type">Type: ${typeStr}</span>
                         </div>
                         <p>${this.highlightText(displayContent, this.input.value || '')}</p>
                         <div class="score">Score: ${(result.score * 100).toFixed(0)}%</div>
@@ -295,59 +297,54 @@ class NexusSearchBar {
             timeout = setTimeout(() => func.apply(this, args), delay);
         };
     }
-}
 
-// Initialize search bar when DOM is loaded
+}
+// Usage in browser
 document.addEventListener('DOMContentLoaded', () => {
     const container = document.querySelector('.search-container');
     if (container) new NexusSearchBar(container);
-});
-// Usage in browser
-const uploader = new FileUploader();
+    
+    const fileInputElement = document.querySelector('#fileInput');
+    // File upload
+    if (fileInputElement) {
+        const uploader = new FileUploader();
+        fileInputElement.addEventListener('change', async (e) => {
+            try {
+                const files = e.target.files;
+                const result = await uploader.uploadFiles(files);
+                console.log('Files uploaded:', result);
+            } catch (error) {
+                console.error('Upload failed', error);
+            }
+        });
+    }
 
-// File upload
-document.querySelector('#fileInput').addEventListener('change', async (e) => {
-    try {
-        const files = e.target.files;
-        const result = await uploader.uploadFiles(files);
-        console.log('Files uploaded:', result);
-    } catch (error) {
-        console.error('Upload failed', error);
+    // Search
+    const uploader = new FileUploader();
+    const searchInput = document.querySelector('#searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', async (e) => {
+            const query = e.target.value.trim();
+            if (query.length > 2) {
+                try {
+                    const results = await uploader.searchFiles(query);
+                    displaySearchResults(results);
+                } catch (error) {
+                    console.error('Search failed', error);
+                }
+            }
+        });
     }
 });
 
-// Search 
-document.querySelector('#searchInput').addEventListener('input', async (e) => {
-    const query = e.target.value.trim();
-    if (query.length > 2) {
-        try {
-            const results = await uploader.searchFiles(query);
-            displaySearchResults(results);
-        } catch (error) {
-            console.error('Search failed', error);
-        }
-    }
-});
-
-// Function to display search results
 function displaySearchResults(results) {
-    const resultsContainer = document.querySelector('.search-results');
-    if (!resultsContainer) return;
-
-    resultsContainer.innerHTML = '';
-
-    if (!results.length) {
-        resultsContainer.innerHTML = '<p>No results found</p>';
-        return;
+    const searchResults = document.querySelector('#searchResults');
+    if (searchResults) {
+        searchResults.innerHTML = '';
+        results.forEach(result => {
+            const resultElement = document.createElement('div');
+            resultElement.textContent = result.title;
+            searchResults.appendChild(resultElement);
+        });
     }
-
-    results.forEach(result => {
-        const resultHTML = `
-            <div class="search-result">
-                <h3>${result.title}</h3>
-                <p>${result.content}</p>
-            </div>
-        `;
-        resultsContainer.insertAdjacentHTML('beforeend', resultHTML);
-    });
 }
