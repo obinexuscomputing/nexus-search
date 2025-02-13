@@ -15,7 +15,7 @@ class NexusSearchBar {
         this.initialize();
     }
 
-    async fetchPosts() {
+    async fetchPosts() { // returns Promise<Array<Object>>
         try {
             this.showLoading();
 
@@ -69,13 +69,13 @@ class NexusSearchBar {
         }
     }
 
-    capitalizeFirstLetter(string) {
+    capitalizeFirstLetter(string) { // returns string
         return string && typeof string === 'string' 
             ? string.charAt(0).toUpperCase() + string.slice(1) 
             : '';
     }
 
-    async initialize() {
+    async initialize() { // returns Promise<void>
         try {
             this.showLoading();
 
@@ -135,13 +135,13 @@ class NexusSearchBar {
         }
     }
 
-    setupEventListeners() {
+    setupEventListeners() { // returns void
         if (this.input) {
             this.input.addEventListener('input', this.debounce(this.handleSearchInput.bind(this), 300));
         }
     }
 
-    async handleSearchInput(event) {
+    async handleSearchInput(event) { // returns Promise<void>
         const query = event.target.value.trim();
         
         if (!query) return this.clearResults();
@@ -165,7 +165,7 @@ class NexusSearchBar {
         }
     }
 
-    renderResults(results) {
+    renderResults(results) { // returns void
         if (!this.resultsContainer || !this.noResults) return;
 
         this.resultsContainer.innerHTML = '';
@@ -206,37 +206,37 @@ class NexusSearchBar {
     }
 
     // Helper method to highlight search terms
-    highlightText(text, searchTerm) {
+    highlightText(text, searchTerm) { // returns string
         if (!searchTerm || !text) return text;
         const regex = new RegExp(`(${searchTerm})`, 'gi');
         return text.replace(regex, '<span class="highlight">$1</span>');
     }
 
-    clearResults() {
+    clearResults() { // returns void
         if (this.resultsContainer) this.resultsContainer.innerHTML = '';
         if (this.noResults) this.noResults.style.display = 'none';
     }
 
-    showLoading() {
+    showLoading() { // returns void
         if (this.spinner) this.spinner.style.display = 'block';
         if (this.input) this.input.disabled = true;
     }
 
-    hideLoading() {
+    hideLoading() { // returns void
         if (this.spinner) this.spinner.style.display = 'none';
         if (this.input) this.input.disabled = false;
     }
 
-    showError(message) {
+    showError(message) { // returns void
         if (this.errorMessage) {
             this.errorMessage.textContent = message;
             this.errorMessage.style.display = 'block';
         }
     }
 
-    debounce(func, delay) {
+    debounce(func, delay) { // returns Function
         let timeout;
-        return (...args) => {
+        return (...args) => { // returns void
             clearTimeout(timeout);
             timeout = setTimeout(() => func.apply(this, args), delay);
         };
