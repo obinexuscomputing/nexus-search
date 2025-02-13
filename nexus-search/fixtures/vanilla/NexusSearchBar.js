@@ -1,3 +1,5 @@
+import {FileUploader} from './FileUploader.js';
+
 class NexusSearchBar {
     constructor(container) {
         this.container = container;
@@ -263,11 +265,6 @@ class NexusSearchBar {
         }
     }
 
-    highlightText(text, searchTerm) {
-        if (!searchTerm || !text) return text;
-        const regex = new RegExp(`(${searchTerm})`, 'gi');
-        return text.replace(regex, '<span class="highlight">$1</span>');
-    }
 
     clearResults() {
         if (this.resultsContainer) this.resultsContainer.innerHTML = '';
@@ -331,3 +328,26 @@ document.querySelector('#searchInput').addEventListener('input', async (e) => {
         }
     }
 });
+
+// Function to display search results
+function displaySearchResults(results) {
+    const resultsContainer = document.querySelector('.search-results');
+    if (!resultsContainer) return;
+
+    resultsContainer.innerHTML = '';
+
+    if (!results.length) {
+        resultsContainer.innerHTML = '<p>No results found</p>';
+        return;
+    }
+
+    results.forEach(result => {
+        const resultHTML = `
+            <div class="search-result">
+                <h3>${result.title}</h3>
+                <p>${result.content}</p>
+            </div>
+        `;
+        resultsContainer.insertAdjacentHTML('beforeend', resultHTML);
+    });
+}
