@@ -19,7 +19,7 @@ export class TrieSearch {
     private totalDocuments: number;
     private maxWordLength: number;
 
-    constructor(maxWordLength: number = 50) {
+    constructor(maxWordLength = 50) {
         this.root = new TrieNode();
         this.documents = new Map();
         this.documentLinks = new Map();
@@ -66,7 +66,12 @@ export class TrieSearch {
             if (!current.hasChild(char)) {
                 current = current.addChild(char);
             } else {
-                current = current.getChild(char)!;
+                const child = current.getChild(char);
+                if (child) {
+                    current = child;
+                } else {
+                    return;
+                }
             }
             current.prefixCount++;
         }
@@ -126,7 +131,9 @@ export class TrieSearch {
             if (!current.hasChild(char)) {
                 return results;
             }
-            current = current.getChild(char)!;
+            const child = current.getChild(char);
+            if (!child) return [];
+            current = child;
         }
 
         if (current.isEndOfWord) {
@@ -136,7 +143,7 @@ export class TrieSearch {
                     score: this.calculateScore(current, word),
                     term: word,
                     id: "",
-                    document: this.documents.get(docId)!,
+                    document: this.documents.get(docId) || {} as IndexedDocument,
                     item: undefined,
                     matches: []
                 });
@@ -165,7 +172,11 @@ export class TrieSearch {
             if (!current.hasChild(char)) {
                 return results;
             }
-            current = current.getChild(char)!;
+            const child = current.getChild(char);
+            if (!child) {
+                return [];
+            }
+            current = child;
         }
 
         // Collect all words with this prefix
@@ -277,7 +288,7 @@ private deserializeTrie(data: { prefixCount: number; isEndOfWord: boolean; docum
                     score: this.calculateScore(node, currentWord),
                     term: currentWord,
                     id: "",
-                    document: this.documents.get(docId)!,
+                    document: this.documents.get(docId) || {} as IndexedDocument,
                     item: undefined,
                     matches: []
                 });
@@ -397,7 +408,7 @@ private deserializeTrie(data: { prefixCount: number; isEndOfWord: boolean; docum
         return dp[s1.length][s2.length];
     }
 
-    private tokenize(text: string, caseSensitive: boolean = false): string[] {
+    private tokenize(text: string, caseSensitive = false): string[] {
         const normalized = caseSensitive ? text : text.toLowerCase();
         return normalized
             .split(/[\s,.!?;:'"()[\]{}/\\]+/)
@@ -436,7 +447,7 @@ private deserializeTrie(data: { prefixCount: number; isEndOfWord: boolean; docum
         return node.shouldPrune();
     }
 
-    public getSuggestions(prefix: string, maxResults: number = 5): string[] {
+    public getSuggestions(prefix: string, maxResults = 5): string[] {
         let current = this.root;
         
         // Navigate to prefix node
@@ -444,7 +455,11 @@ private deserializeTrie(data: { prefixCount: number; isEndOfWord: boolean; docum
             if (!current.hasChild(char)) {
                 return [];
             }
-            current = current.getChild(char)!;
+            const child = current.getChild(char);
+            if (!child) {
+                return [];
+            }
+            current = child;
         }
 
         // Collect suggestions
