@@ -14,7 +14,7 @@ export class AlgoUtils {
   static bfsTraversal(
     root: IndexNode,
     searchText: string,
-    maxResults: number = 10
+    maxResults = 10
   ): Array<{ id: string; score: number }> {
     const results: Array<{ id: string; score: number }> = [];
     const queue: Array<{ node: IndexNode; depth: number; matched: string }> = [];
@@ -24,7 +24,9 @@ export class AlgoUtils {
     queue.push({ node: root, depth: 0, matched: '' });
     
     while (queue.length > 0 && results.length < maxResults) {
-      const { node, depth, matched } = queue.shift()!;
+      const item = queue.shift();
+      if (!item) break;
+      const { node, depth, matched } = item;
       
       // Check if we've found a complete match
       if (matched === searchText && node.id && !visited.has(node.id)) {
@@ -59,7 +61,7 @@ export class AlgoUtils {
   static dfsTraversal(
     root: IndexNode,
     searchText: string,
-    maxResults: number = 10
+    maxResults = 10
   ): Array<{ id: string; score: number }> {
     const results: Array<{ id: string; score: number }> = [];
     const visited = new Set<string>();
@@ -104,8 +106,8 @@ export class AlgoUtils {
   static fuzzySearch(
     root: IndexNode,
     searchText: string,
-    maxDistance: number = 2,
-    maxResults: number = 10
+    maxDistance = 2,
+    maxResults = 10
   ): Array<{ id: string; score: number; distance: number }> {
     const results: Array<{ id: string; score: number; distance: number }> = [];
     const visited = new Set<string>();
@@ -171,7 +173,10 @@ export class AlgoUtils {
     // Enhanced scoring for each result
     return baseResults.map(result => {
       const document = documents.get(result.id);
-      const documentRank = documentRanks.get(result.id)!;
+      const documentRank = documentRanks.get(result.id);
+      if (!documentRank) {
+        throw new Error(`Document rank not found for id: ${result.id}`);
+      }
       
       // Calculate TF-IDF score
       const tfIdf = ScoringUtils.calculateTfIdf(searchText, document, documents);

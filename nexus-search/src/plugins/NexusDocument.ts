@@ -8,6 +8,7 @@ import {
     SearchResult,
     RegexSearchConfig,
     NexusDocumentMetadata,
+    NexusFields,
   
 } from "@/types";
 
@@ -27,7 +28,7 @@ import { PerformanceMonitor } from "@/utils/PerformanceUtils";
 export interface NexusDocument extends INexusDocument {
     id: string;
     title: string;
-    content: string;
+    content: string | { text: string };
     path: string;
     type: string;
     metadata?: NexusDocumentMetadata;
@@ -154,22 +155,82 @@ export class NexusDocumentPlugin {
      */
     async search(query: string, options: Partial<SearchOptions> = {}): Promise<SearchResult<NexusDocument>[]> {
         return await this.performanceMonitor.measure('search', async () => {
-            const results = await this.searchEngine.search<NexusDocument>(query, {
+            const results = await this.searchEngine.search<IndexedDocument>(query, {
                 ...options,
                 includeMatches: true
             });
-
-            return results.map(result => ({
-                ...result,
-                item: {
-                    ...(this.documents.get(result.item.id) ?? { id: result.item.id }),
+    
+            return results.map(result => {
+                const originalDoc = this.documents.get(result.docId);
+                const now = new Date().toISOString();
+                
+                const nexusFields: NexusFields = {
+                    title: originalDoc?.title || '',
+                    content: originalDoc?.content || {},
+                    author: originalDoc?.metadata?.author as string || '',
+                    tags: Array.isArray(originalDoc?.metadata?.tags) ? originalDoc.metadata.tags : [],
+                    version: originalDoc?.metadata?.version as string || '1.0',
+                    type: originalDoc?.type || 'document',
+                    created: originalDoc?.fields?.created || now,
+                    status: originalDoc?.fields?.status || 'draft',
+                    modified: now,
+                    category: originalDoc?.fields?.category,
+                    locale: originalDoc?.fields?.locale
+                };
+    
+                const document: NexusDocument = {
+                    content: originalDoc?.content || '',
+                    path: originalDoc?.path || '',
+                    type: originalDoc?.type || '',
+                    id: result.docId,
+                    fields: nexusFields,
+                    metadata: {
+                        indexed: Date.now(),
+                        lastModified: Date.now(),
+                        author: nexusFields.author,
+                        tags: nexusFields.tags,
+                        version: nexusFields.version,
+                        ...originalDoc?.metadata
+                    },
+                    versions: originalDoc?.versions || [],
+                    relations: originalDoc?.relations || [],
+                    links: originalDoc?.links,
+                    ranks: originalDoc?.ranks,
+                    document: function() { return this; },
+                    base: function() {
+                        return {
+                            id: this.id,
+                            title: this.fields.title,
+                            author: this.fields.author,
+                            tags: this.fields.tags,
+                            version: this.fields.version,
+                            metadata: {
+                                ...this.metadata,
+                                lastModified: this.metadata?.lastModified || Date.now()
+                            },
+                            versions: this.versions,
+                            relations: this.relations
+                        };
+                    },
+                    title: nexusFields.title,
+                    author: nexusFields.author,
+                    tags: nexusFields.tags,
+                    version: nexusFields.version
+                };
+    
+                return {
+                    id: result.id,
+                    docId: result.docId,
+                    item: document,
                     score: result.score,
-                    matches: result.matches
-                }
-            }));
+                    matches: result.matches,
+                    metadata: document.metadata,
+                    document: document,
+                    term: result.term
+                };
+            });
         });
     }
-
     /**
      * Perform a breadth-first search
      * @param query Search query
