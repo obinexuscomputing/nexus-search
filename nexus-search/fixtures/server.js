@@ -57,25 +57,16 @@ function setCacheHeaders(res, ext) {
     }
 }
 
-export class FileSearchServer {// Use later
+class FileSearchServer {
     constructor() {
-        this.app = express();
-        this.upload = multer({ 
-            dest: 'uploads/',
-            fileFilter: this.fileFilter
-        });
         this.searchIndex = [];
     }
 
     // File type validation
-    fileFilter(req, file, cb) {
+    fileFilter(file) {
         const allowedTypes = ['.md', '.html', '.txt'];
-        const ext = path.extname(file.originalname).toLowerCase();
-        if (allowedTypes.includes(ext)) {
-            cb(null, true);
-        } else {
-            cb(new Error('Unsupported file type'), false);
-        }
+        const ext = path.extname(file).toLowerCase();
+        return allowedTypes.includes(ext);
     }
 
     // Index file contents
@@ -107,64 +98,80 @@ export class FileSearchServer {// Use later
     }
 
     // Setup routes
-    setupRoutes() {
-        // File upload endpoint
-        this.app.post('/upload', this.upload.array('files'), async (req, res) => {
-            try {
-                const indexedFiles = [];
-                
-                for (const file of req.files) {
-                    const indexedFile = await this.indexFile(file.path);
-                    indexedFiles.push(indexedFile);
+    async handleRequest(req, res) {
+        const url = new URL(req.url, `http://${req.headers.host}`);
+        const pathname = url.pathname;
+
+        if (req.method === 'POST' && pathname === '/upload') {
+            // Handle file upload
+            let body = '';
+            req.on('data', chunk => {
+                body += chunk.toString();
+            });
+            req.on('end', async () => {
+                try {
+                    const files = JSON.parse(body).files;
+                    const indexedFiles = [];
+
+                    for (const file of files) {
+                        if (this.fileFilter(file)) {
+                            const indexedFile = await this.indexFile(file);
+                            indexedFiles.push(indexedFile);
+                        } else {
+                            throw new Error('Unsupported file type');
+                        }
+                    }
+
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        message: 'Files uploaded and indexed successfully',
+                        files: indexedFiles
+                    }));
+                } catch (error) {
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ 
+                        error: 'Failed to upload or index files',
+                        details: error.message 
+                    }));
                 }
-
-                res.json({
-                    message: 'Files uploaded and indexed successfully',
-                    files: indexedFiles
-                });
-            } catch (error) {
-                res.status(500).json({ 
-                    error: 'Failed to upload or index files',
-                    details: error.message 
-                });
-            }
-        });
-
-        // Search endpoint
-        this.app.get('/search', (req, res) => {
-            const query = req.query.q;
+            });
+        } else if (req.method === 'GET' && pathname === '/search') {
+            // Handle search
+            const query = url.searchParams.get('q');
             if (!query) {
-                return res.status(400).json({ error: 'Query is required' });
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Query is required' }));
+                return;
             }
 
             const results = this.searchFiles(query);
-            res.json(results);
-        });
-
-        // List indexed files
-        this.app.get('/indexed-files', (req, res) => {
-            res.json(this.searchIndex);
-        });
-
-        // Clear index
-        this.app.delete('/clear-index', (req, res) => {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(results));
+        } else if (req.method === 'GET' && pathname === '/indexed-files') {
+            // List indexed files
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(this.searchIndex));
+        } else if (req.method === 'DELETE' && pathname === '/clear-index') {
+            // Clear index
             this.searchIndex = [];
-            res.json({ message: 'Search index cleared' });
-        });
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: 'Search index cleared' }));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.end('Not Found');
+        }
     }
 
     // Start server
     start(port = 3000) {
-        this.setupRoutes();
-        this.app.listen(port, () => {
+        const server = http.createServer(this.handleRequest.bind(this));
+        server.listen(port, () => {
             console.log(`File search server running on port ${port}`);
         });
     }
 }
 
-// // Usage
-// const fileSearchServer = new FileSearchServer();
-
+const fileSearchServer = new FileSearchServer();
 fileSearchServer.start();
 
 const server = http.createServer(async (req, res) => {
@@ -283,3 +290,9 @@ process.on('unhandledRejection', (reason) => {
     logger.error('Unhandled rejection:', reason);
     shutdown();
 });
+
+// How to run the server
+// node nexus-search/fixtures/server.js
+// Open http://localhost:3000/vanilla/ in your browser
+// Open http://localhost:3000/react/ in your browser
+// Open http://localhost:3000/vue/ in your browser
